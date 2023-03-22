@@ -25,7 +25,7 @@ const Logado = require("../src/Controllers/Users/Logado");
 const Deslogar = require("../src/Controllers/Users/Deslogar");
 
 //DATABASE
-//const Database = required("./src/Database/index.js");
+const Database = required("./src/Database/index.js");
 const {create, readAll, readOne, update, deleteOne, deleteAll } = require("./Database/dbHelpers");
 
 //PAGES
