@@ -43,8 +43,7 @@ require('./routes/user.routes')(app);
 const db = require("./models");
 const Role = db.role;
 
-db.mongoose
-  .connect(`mongodb://${dbConfig.HOST}:${dbConfig.PORT}/${dbConfig.DB}`, {
+mongoose.connect(`mongodb://localhost:27017`, {
     useNewUrlParser: true,
     useUnifiedTopology: true
   })
@@ -58,7 +57,7 @@ db.mongoose
   });
 
 function initial() {
-  Role.estimatedDocumentCount((err, count) => {
+  Role.save((err, count) => {
     if (!err && count === 0) {
       new Role({
         name: "user"

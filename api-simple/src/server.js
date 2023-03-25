@@ -1,17 +1,13 @@
 
 const express = require("express");
 const cors = require("cors");
-const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
-//const mongoose = require("mongoose");
-
 const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
 const app = express();
 const port = process.env.PORT || 3000;
-const jwtSecret = process.env.JWT_SECRET;
+const jwt = process.env.JWT_SECRET;
 const mongoURI = process.env.MONGODB_URI;
 
 app.use(express.json())
@@ -77,8 +73,6 @@ app.post('/login', async (req, res) => {
     res.status(500).send('Error logging in');
   }
 });
-
-//const jwt = require('jsonwebtoken');
 
 const auth = (req, res, next) => {
   const token = req.cookies.jwt;
