@@ -3,37 +3,125 @@ const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
-const mongoose = require("mongoose");
+//const mongoose = require("mongoose");
 
-//APP
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+require('dotenv').config();
+
 const app = express();
-// parse json
+const port = process.env.PORT || 3000;
+const jwtSecret = process.env.JWT_SECRET;
+const mongoURI = process.env.MONGODB_URI;
+
 app.use(express.json())
 app.use(cors());
-app.use(bodyParser.json());
 app.use(cookieParser());
-app.use("/Pages", express.static(__dirname+"/Pages"));
 
-//PORT
-app.listen(3000, () => {
-    console.log("server on");
+const mongoose = require('mongoose');
+mongoose.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true })
+.then(() => console.log('MongoDB connected'))
+.catch(err => console.log(err));
+
+app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
 });
 
-//CONTROLLERS
-const Logar = require("../src/Controllers/Users/Logar");
-const Logado = require("../src/Controllers/Users/Logado");
-const Deslogar = require("../src/Controllers/Users/Deslogar");
-
 //DATABASE
-const Database = required("./src/Database/index.js");
 const {create, readAll, readOne, update, deleteOne, deleteAll } = require("./Database/dbHelpers");
 
-//PAGES
-app.get("/", (req, res) => res.sendFile(__dirname+"/Pages/Index/index.html"));
-app.get("/privado", Logado, (req, res) => res.send("Somente usuario logado"));
+const userSchema = new mongoose.Schema({
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+  },
+  password: {
+    type: String,
+    required: true,
+  },
+});
+
+const User = mongoose.model('User', userSchema);
+
+app.post('/register', async (req, res) => {
+  const { email, password } = req.body;
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  try {
+    const user = new User({ email, password: hashedPassword });
+    await user.save();
+    res.status(201).send('User created successfully');
+  } catch {
+    res.status(500).send('Error creating user');
+  }
+});
+
+app.post('/login', async (req, res) => {
+  const { email, password } = req.body;
+  const user = await User.findOne({ email });
+
+  if (!user) {
+    return res.status(400).send('Cannot find user');
+  }
+
+  try {
+    if (await bcrypt.compare(password, user.password)) {
+      const token = jwt.sign({ email: user.email }, 'secret');
+      res.cookie('jwt', token);
+      res.status(200).send('Logged in successfully');
+    } else {
+      res.status(401).send('Invalid login credentials');
+    }
+  } catch {
+    res.status(500).send('Error logging in');
+  }
+});
+
+//const jwt = require('jsonwebtoken');
+
+const auth = (req, res, next) => {
+  const token = req.cookies.jwt;
+
+  if (!token) {
+    return res.status(401).send('Unauthorized');
+  }
+
+  try {
+    const decoded = jwt.verify(token, 'secret');
+    req.user = decoded;
+    next();
+  } catch {
+    res.status(401).send('Unauthorized');
+  }
+};
+
+app.get('/protected', auth, (req, res) => {
+  res.send(`Welcome ${req.user.email}`);
+});
 
 
-// ROUTES
+// ROUTES books
+app.post("/users/create", async (req, res) => {
+  //check se req.body esta vazio
+  if (!Object.keys(req.body).length) {
+    res.status(400).json({
+    message: "Não pode estar vazio"
+  })
+  }
+  const {email, senha} = (req.body)
+  // grava no db
+  const login = await db({email, senha})
+  if (login.error) {
+    res.status(500).json({
+      message: login.error
+    })
+  }
+  res.status(201).json({
+    message: "Novo usuario criado"
+  })
+})
+
 app.post("/users/logar", async(req, res) => {
     res.send(await Logar(req.body));
 });
