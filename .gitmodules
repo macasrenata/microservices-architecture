@@ -1,0 +1,3 @@
+[submodule "api-nestJS/api-nestJS/api-smartranking-backend"]
+	path = api-nestJS/api-nestJS/api-smartranking-backend
+	url = https://github.com/macasrenata/microservices-architecture
